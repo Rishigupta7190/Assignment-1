@@ -9,25 +9,31 @@ const orderRoutes = require('./routes/orders');
 const app = express();
 const port = process.env.PORT || 10000;
 
-//  CREATE TABLES BEFORE SERVER STARTS
+// ✅ CREATE + FIX TABLES
 const createTables = async () => {
   try {
+    // Create customers table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS customers (
         id SERIAL PRIMARY KEY,
         name VARCHAR(100),
-        email VARCHAR(100)
+        email VARCHAR(100),
+        phone VARCHAR(15),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
+    // Create products table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS products (
         id SERIAL PRIMARY KEY,
         name VARCHAR(100),
-        price INT
+        price INT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
+    // Create orders table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS orders (
         id SERIAL PRIMARY KEY,
@@ -38,13 +44,26 @@ const createTables = async () => {
       );
     `);
 
-    console.log(" All tables ready");
+    // 🔥 Fix existing tables (IMPORTANT)
+    await pool.query(`
+      ALTER TABLE customers ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+    `);
+
+    await pool.query(`
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+    `);
+
+    await pool.query(`
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+    `);
+
+    console.log("✅ All tables ready + columns fixed");
   } catch (err) {
-    console.error(" Table creation error:", err);
+    console.error("❌ Table creation error:", err);
   }
 };
 
-// 🔥 IMPORTANT: call it BEFORE listen
+// Run before server starts
 createTables();
 
 app.use(cors());
