@@ -69,3 +69,24 @@
 * Issue: Invalid address accepted
 * Impact: Data issue
 * Fix: Add length check
+
+## 9. SQL Injection Vulnerability 
+
+Location: backend/routes/customers.js (search API)
+
+Issue: Query is constructed using string concatenation:
+
+"SELECT * FROM customers WHERE name ILIKE '%" + name + "%'"
+
+Impact:
+
+Attackers can inject malicious SQL
+
+Can lead to data leakage or database damage
+
+Fix: Use parameterized queries:
+
+const result = await pool.query(
+  "SELECT * FROM customers WHERE name ILIKE $1",
+  [`%${name}%`]
+);
